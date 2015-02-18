@@ -1,0 +1,28 @@
+body {
+    background: #3d4444;
+    color: white;
+    font-family : 'Raleway', Arial, sans-serif;
+}
+
+@keyframes blink{
+    0% { opacity:1; }
+    50% { opacity:0; }
+    100% { opacity:1; }
+}
+
+.MaskChar {
+    float: left;
+}
+
+.MaskChar.active {
+    animation: blink 1s infinite;
+}
+
+.MaskChar.editable.empty {
+    opacity: 0.4;
+}
+
+.MaskChar.editable.filled {
+    opacity: 1;
+    color: #00d8ff;
+}
