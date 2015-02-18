@@ -1,4 +1,4 @@
-var maskPattern = "MM/DD/YY";
+var maskPattern = "++Mw45MdfgM345M83459D84357Y";
 
 var isCharEditable = function(char) {
     return char === "D" || char === "M" || char === "Y";
@@ -49,45 +49,69 @@ var MaskChar = React.createClass({
 });
 
 var Mask = React.createClass({
+    maskChars : [],
+
     isCharEditable : function(char) {
         return char === "D" || char === "M" || char === "Y";
     },
 
-    editableIndices : [],
+    getTypableCharacter : function() {
+        var self = this;
+        return this.maskChars.filter(function(maskChar, index) {
+            var char = self.refs["maskChar" + index];
+            return char.props.isEditable && !char.state.isFilled;
+        })[0];
+    },
 
-    editIndex : 0,
+    getDeletableCharacter : function() {
+        var self = this;
+        var filledValues =  this.maskChars.filter(function(maskChar, index) {
+            var char = self.refs["maskChar" + index];
+            return char.props.isEditable && char.state.isFilled;
+        });
+
+        return filledValues.pop();
+    },
 
     componentDidMount: function() {
-        document.addEventListener('keypress', this.handleKeyDown);
+        document.addEventListener('keydown', this.handleKeyDown);
     },
 
     componentWillUnmount: function() {
-        document.removeEventListener('keypress', this.handleKeyDown);
+        document.removeEventListener('keydown', this.handleKeyDown);
     },
 
     handleKeyDown : function(e) {
-        if(this.editIndex < this.editableIndices.length) {
-            var typedChar = String.fromCharCode(e.which);
-            var maskChar = this.refs["maskChar" + this.editableIndices[this.editIndex]]
-            var typed = maskChar.typeValue(typedChar);
+        if(e.keyCode === 8) { //BackSpace
+            var deletableChar = this.getDeletableCharacter();
 
-            if(typed) {
-                this.editIndex++;
+            if(!!deletableChar) {
+                this.refs[deletableChar.ref].deleteValue();
+            } else {
+                console.log("No editable-filled character found.")
             }
-        } else {
-            console.warn("No more characters left to type.")
+
+            e.preventDefault();
+
+        } else { //Everything else
+            var typedChar = String.fromCharCode(e.which);
+            var typableChar = this.getTypableCharacter();
+            
+            if(!!typableChar) {
+                this.refs[typableChar.ref].typeValue(typedChar);
+            } else {
+                console.log("No editable-empty character found.")
+            }
         }
+
     },
 
     render: function() {
         var self = this;
 
         self.maskChars = this.props.pattern.split("").map(function(patternChar, i){
-            if(self.isCharEditable(patternChar)) {
-                self.editableIndices.push(i);
-            }
             return (
-                <MaskChar sourceChar={patternChar} isEditable={self.isCharEditable(patternChar)} isActive={i === self.editIndex} ref={"maskChar" + i}/>
+                <MaskChar sourceChar={patternChar} isEditable={self.isCharEditable(patternChar)} isActive={false} ref={"maskChar" + i}/>
             )
         });
 
@@ -99,7 +123,7 @@ var Mask = React.createClass({
         }
 
         return (
-            <div className="Mask" style={maskStyle} onClick={this.handleKeyDown}>{this.maskChars}</div>
+            <div className="Mask" style={maskStyle} onClick={this.handleKeyDown}>{self.maskChars}</div>
         )
     }
 });
