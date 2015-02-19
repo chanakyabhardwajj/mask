@@ -15,6 +15,11 @@ body {
     }
 }
 
+.container {
+    display: block;
+    overflow: hidden;
+}
+
 .MaskLabel {
     float: left;
 }
@@ -22,7 +27,7 @@ body {
     float: left;
     white-space: pre;
 }
-.MaskChar.active {
+.MaskChar.blink {
     animation: blink 1s infinite;
 }
 .MaskChar.editable.empty {

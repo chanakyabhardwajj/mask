@@ -5,7 +5,8 @@ var MaskChar = React.createClass({
     getInitialState: function() {
         return {
             value: null,
-            isFilled: false
+            isFilled: false,
+            blinking : false
         };
     },
 
@@ -30,23 +31,31 @@ var MaskChar = React.createClass({
         });
     },
 
+    setBlinking: function(bool) {
+        this.setState({
+            blinking : bool
+        });
+    },
+
     render: function() {
         var cx = React.addons.classSet;
         var classes = cx({
             'MaskChar': true,
-            'active': this.props.isActive,
+            'blink': this.state.blinking,
             'editable': this.props.isEditable,
             'uneditable': !this.props.isEditable,
             'filled': this.state.isFilled,
             'empty': !this.state.isFilled
         });
 
-        return <span className = {classes } > {this.state.value || this.props.sourceChar } < /span>; 
+        return <span className = {classes} > {this.state.value || this.props.sourceChar} < /span>; 
     }
 });
 
 var Mask = React.createClass({
     maskChars: [],
+
+    blinkingCharIndex : [],
 
     isCharEditable: function(char) {
         return ["M", "D", "Y", "C"].indexOf(char) > -1;
@@ -72,6 +81,15 @@ var Mask = React.createClass({
 
     componentDidMount: function() {
         document.addEventListener('keydown', this.handleKeyDown);
+
+        var firstTypableChar = this.getTypableCharacter();
+
+        if (!!firstTypableChar) {
+            this.refs[firstTypableChar.ref].setBlinking(true);
+            this.blinkingCharIndex = this.maskChars.indexOf(firstTypableChar);
+        } else {
+            console.log("Nothing to blink!!")
+        }
     },
 
     componentWillUnmount: function() {
@@ -84,8 +102,12 @@ var Mask = React.createClass({
 
             if (!!deletableChar) {
                 this.refs[deletableChar.ref].deleteValue();
+                this.refs[this.maskChars[this.blinkingCharIndex].ref].setBlinking(false);
+                this.refs[deletableChar.ref].setBlinking(true);
+                this.blinkingCharIndex = this.maskChars.indexOf(deletableChar);
+                
             } else {
-                console.log("No editable-filled character found.")
+                console.log("Nothing to delete.")
             }
 
             e.preventDefault();
@@ -96,8 +118,17 @@ var Mask = React.createClass({
 
             if (!!typableChar) {
                 this.refs[typableChar.ref].typeValue(typedChar);
+
+                var nextTypableChar = this.getTypableCharacter();
+
+                if (!!nextTypableChar) {
+                    this.refs[typableChar.ref].setBlinking(false);
+                    this.refs[nextTypableChar.ref].setBlinking(true);
+                    this.blinkingCharIndex =  this.maskChars.indexOf(nextTypableChar);
+                }
+
             } else {
-                console.log("No editable-empty character found.")
+                console.log("Can't type anymore.")
             }
         }
 
@@ -107,14 +138,15 @@ var Mask = React.createClass({
         var self = this;
 
         self.maskChars = this.props.pattern.split("").map(function(patternChar, i) {
-            return ( < MaskChar sourceChar = {patternChar } isEditable = {self.isCharEditable(patternChar) } isActive = {false } ref = {"maskChar" + i } /> ) 
+            return ( < MaskChar sourceChar = {patternChar} isEditable = {self.isCharEditable(patternChar)} ref = {"maskChar" + i} /> ) 
         });
 
         var maskStyle = {
             fontSize: "25px",
             lineHeight: "50px",
             margin: "auto",
-            padding: "10px"
+            padding: "10px",
+            display: "block" 
         }
 
         return ( 
