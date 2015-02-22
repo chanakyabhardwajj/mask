@@ -1,9 +1,10 @@
 body {
-    background: #3d4444;
+    background: #262B30;
     color: white;
-    font-family: 'Inconsolata', Arial, sans-serif;
+    font-family: 'Roboto Slab', serif;
 }
-@keyframes blink {
+
+@-webkit-keyframes blink {
     0% {
         opacity: 1;
     }
@@ -15,25 +16,55 @@ body {
     }
 }
 
-.container {
-    display: block;
-    overflow: hidden;
+.appContainer {
+    width: 600px;
+    margin: auto;  
 }
-
+.Mask {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    margin:40px 0;
+    font-size: 20px;
+    box-shadow: 2px 2px 2px #222;
+    transition : 0.4s box-shadow ease;
+    background: #2E3338;
+    cursor: pointer;
+}
+.Mask.focussed {
+    background: rgba(173, 216, 230, 0.2);
+}
 .MaskLabel {
-    float: left;
+    flex:1;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 100;
+    padding: 10px;
+    background: #1abc9c;
+    display: flex;
+    align-items : center;
+}
+.MaskBody {
+    flex:2;
+    display: flex;
+    padding: 10px;
+    font-family: monospace;
+    justify-content : flex-end;
 }
 .MaskChar {
     float: left;
     white-space: pre;
+    margin-left: 5px;
+    color: salmon;      
 }
-.MaskChar.blink {
-    animation: blink 1s infinite;
+.Mask.focussed .MaskChar.blink {
+    -webkit-animation: blink 1s infinite;
 }
 .MaskChar.editable.empty {
     opacity: 0.4;
+    color:#fff;
 }
 .MaskChar.editable.filled {
     opacity: 1;
-    color: #00d8ff;
 }

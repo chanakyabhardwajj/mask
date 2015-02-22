@@ -1,159 +1,215 @@
-var datePattern = "MM/DD/YYYY";
-var ccPattern = "CCCC CCCC CCCC CCCC";
-
-var MaskChar = React.createClass({
-    getInitialState: function() {
-        return {
-            value: null,
-            isFilled: false,
-            blinking : false
-        };
-    },
-
-    typeValue: function(char) {
-        if ((/[0-9A-Za-z]/).test(char)) {
-            console.log("Char to be typed %s is valid", char);
-            this.setState({
-                value: char,
-                isFilled: true
-            });
-            return true;
-
-        } else {
-            return false;
-        }
-    },
-
-    deleteValue: function(char) {
-        this.setState({
-            value: null,
-            isFilled: false
-        });
-    },
-
-    setBlinking: function(bool) {
-        this.setState({
-            blinking : bool
-        });
-    },
-
-    render: function() {
-        var cx = React.addons.classSet;
-        var classes = cx({
-            'MaskChar': true,
-            'blink': this.state.blinking,
-            'editable': this.props.isEditable,
-            'uneditable': !this.props.isEditable,
-            'filled': this.state.isFilled,
-            'empty': !this.state.isFilled
-        });
-
-        return <span className = {classes} > {this.state.value || this.props.sourceChar} < /span>; 
-    }
-});
-
 var Mask = React.createClass({
-    maskChars: [],
-
-    blinkingCharIndex : [],
 
     isCharEditable: function(char) {
         return ["M", "D", "Y", "C"].indexOf(char) > -1;
     },
 
-    getTypableCharacter: function() {
-        var self = this;
-        return this.maskChars.filter(function(maskChar, index) {
-            var char = self.refs["maskChar" + index];
-            return char.props.isEditable && !char.state.isFilled;
-        })[0];
+    getDefaultProps: function() {
+        return {
+            pattern : "",
+            label : "Enter a value"
+        };
     },
 
-    getDeletableCharacter: function() {
-        var self = this;
-        var filledValues = this.maskChars.filter(function(maskChar, index) {
-            var char = self.refs["maskChar" + index];
-            return char.props.isEditable && char.state.isFilled;
-        });
-
-        return filledValues.pop();
+    getInitialState: function() {
+        return {
+            maskData : [] 
+        };
     },
 
     componentDidMount: function() {
+        var data = this.prepareMaskData();
+        this.setState({
+            maskData : data
+        });
+
         document.addEventListener('keydown', this.handleKeyDown);
-
-        var firstTypableChar = this.getTypableCharacter();
-
-        if (!!firstTypableChar) {
-            this.refs[firstTypableChar.ref].setBlinking(true);
-            this.blinkingCharIndex = this.maskChars.indexOf(firstTypableChar);
-        } else {
-            console.log("Nothing to blink!!")
-        }
     },
 
     componentWillUnmount: function() {
         document.removeEventListener('keydown', this.handleKeyDown);
     },
 
-    handleKeyDown: function(e) {
-        if (e.keyCode === 8) { //BackSpace
-            var deletableChar = this.getDeletableCharacter();
+    //Will be called only once, at the beginning.
+    prepareMaskData : function() {
+        self = this;
+        return this.props.pattern.split("").map(function(patternChar, i) {
+            return {
+                defaultValue : patternChar,
+                displayValue : null,
+                isEditable : self.isCharEditable(patternChar),
+                isFilled : false,
+                isBlinking : i===0
+            };
+        });
+    },
 
-            if (!!deletableChar) {
-                this.refs[deletableChar.ref].deleteValue();
-                this.refs[this.maskChars[this.blinkingCharIndex].ref].setBlinking(false);
-                this.refs[deletableChar.ref].setBlinking(true);
-                this.blinkingCharIndex = this.maskChars.indexOf(deletableChar);
-                
-            } else {
-                console.log("Nothing to delete.")
+    handleKeyDown : function(e) {
+        if(this.props.inFocus) {
+            if(e.metaKey) {
+                //skip
+                return;
             }
+            if (e.keyCode === 9 || e.keyCode === 13) { //Tab || Enter
+                e.data = "next";
+                //bubble up
+            }
+            else if (e.keyCode === 8) { //BackSpace
+                e.preventDefault();
 
-            e.preventDefault();
+                var char = this.state.maskData.filter(function(charData, index) {
+                    return charData.isEditable && charData.isFilled;
+                }).pop();
 
-        } else { //Everything else
-            var typedChar = String.fromCharCode(e.which);
-            var typableChar = this.getTypableCharacter();
+                if(char !== undefined) {
+                    var i = this.state.maskData.indexOf(char);
+                    var newData = this.state.maskData.slice();
+                    newData[i].displayValue = null;
+                    newData[i].isFilled = false;
 
-            if (!!typableChar) {
-                this.refs[typableChar.ref].typeValue(typedChar);
+                    var blinkingChar = newData.filter(function(charData, index) {
+                        return charData.isBlinking;
+                    })[0];
 
-                var nextTypableChar = this.getTypableCharacter();
+                    var k = newData.indexOf(blinkingChar);
+                    if(k!==i) {
+                        newData[i].isBlinking = true;
+                        newData[k].isBlinking = false;
+                    }
 
-                if (!!nextTypableChar) {
-                    this.refs[typableChar.ref].setBlinking(false);
-                    this.refs[nextTypableChar.ref].setBlinking(true);
-                    this.blinkingCharIndex =  this.maskChars.indexOf(nextTypableChar);
+                    this.setState({
+                        maskData : newData
+                    })
                 }
 
             } else {
-                console.log("Can't type anymore.")
+                if(e.keyCode>=48 && e.keyCode<=57 || e.keyCode>=96 && e.keyCode<=105) { //only numbers
+                    var char = this.state.maskData.filter(function(charData, index) {
+                        return charData.isEditable && !charData.isFilled;
+                    })[0];
+
+                    if(char !== undefined) {
+                        var i = this.state.maskData.indexOf(char);
+                        var newData = this.state.maskData.slice();
+                        newData[i].displayValue = String.fromCharCode(e.keyCode);
+                        newData[i].isFilled = true;
+
+                        var nextChar = newData.filter(function(charData, index) {
+                            return charData.isEditable && !charData.isFilled;
+                        })[0];
+
+                        if(nextChar) {
+                            var k = newData.indexOf(nextChar);
+                            newData[i].isBlinking = false;
+                            newData[k].isBlinking = true;
+                        }
+
+                        this.setState({
+                            maskData : newData
+                        })
+                    }
+                }             
             }
         }
-
     },
 
     render: function() {
         var self = this;
 
-        self.maskChars = this.props.pattern.split("").map(function(patternChar, i) {
-            return ( < MaskChar sourceChar = {patternChar} isEditable = {self.isCharEditable(patternChar)} ref = {"maskChar" + i} /> ) 
+        var maskChars = this.state.maskData.map(function(charData, index) {
+            var cx = React.addons.classSet;
+            var classes = cx({
+                'MaskChar': true,
+                'blink': charData.isBlinking,
+                'editable': charData.isEditable,
+                'uneditable': !charData.isEditable,
+                'filled': charData.isFilled,
+                'empty': !charData.isFilled
+            });
+
+            return <span className = {classes} key={index}>{charData.displayValue || charData.defaultValue}</span>;
         });
 
-        var maskStyle = {
-            fontSize: "25px",
-            lineHeight: "50px",
-            margin: "auto",
-            padding: "10px",
-            display: "block" 
-        }
+        var cx = React.addons.classSet;
+        var classes = cx({
+            'Mask' : true,
+            'focussed': this.props.inFocus
+        });
 
         return ( 
-            <div className = "Mask" style = {maskStyle} onClick = {this.handleKeyDown}><span className="MaskLabel">Enter a date : </span>{self.maskChars}</div>
+            <div className = {classes} onKeyDown = {this.handleKeyDown} onClick={this.props.onClick}>
+                <span className="MaskLabel">{this.props.label}</span>
+                <span className="MaskBody">{maskChars}</span>
+            </div>
         ) 
     }
 });
 
-React.render( <Mask pattern = {datePattern}/>, document.getElementById('dateContainer') );
-React.render( <Mask pattern = {ccPattern}/>, document.getElementById('ccContainer') );
+var App = React.createClass({
+    getDefaultProps: function() {
+        return {
+            data : []
+        };
+    },
+
+    getInitialState: function() {
+        return {
+            focusIndex : 0 
+        };
+    },
+
+    componentDidMount: function() {
+        document.addEventListener('keydown', this.handleKeyDown);
+    },
+
+    handleKeyDown : function(e) {
+        if(e.data==="next") {
+            e.preventDefault();
+            this.focusNext();
+        }
+    },
+
+    handleClick : function(index) {
+        this.setState({
+            focusIndex : index
+        });
+    },
+
+    focusNext : function() {
+        var newFocusIndex = (this.state.focusIndex + 1) % this.props.data.length;
+        this.setState({
+            focusIndex : newFocusIndex
+        });
+    },
+
+    render: function() {
+        var self = this;
+
+        return (
+            <div className="appContainer">{
+                this.props.data.map(function(maskData, index) {
+                    return <Mask 
+                            pattern={maskData.pattern} 
+                            label={maskData.label} 
+                            inFocus={index===self.state.focusIndex} 
+                            onClick={self.handleClick.bind(self,index)} 
+                            key={index} 
+                            ref={index}/>;
+
+                }, this)}</div>
+        );
+    }
+});
+
+var masks = [
+    {
+        pattern : "MM/DD/YYYY",
+        label : "Enter a date"
+    },
+    {
+        pattern : "CCCC CCCC CCCC CCCC",
+        label : "Enter credit card number"
+    },
+];
+
+React.render( <App data={masks}/>, document.getElementById('appBox') );
