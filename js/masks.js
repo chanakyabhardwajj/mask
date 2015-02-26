@@ -1,7 +1,7 @@
 var Mask = React.createClass({
 
     isCharEditable: function(char) {
-        return ["M", "D", "Y", "C"].indexOf(char) > -1;
+        return /[a-zA-Z0-9]/g.test(char);
     },
 
     getDefaultProps: function() {
@@ -23,11 +23,12 @@ var Mask = React.createClass({
             maskData : data
         });
 
-        document.addEventListener('keydown', this.handleKeyDown);
+        this.getDOMNode().removeEventListener('keydown', this.handleKeyDown);
+        this.getDOMNode().addEventListener('keydown', this.handleKeyDown);
     },
 
     componentWillUnmount: function() {
-        document.removeEventListener('keydown', this.handleKeyDown);
+        this.getDOMNode().removeEventListener('keydown', this.handleKeyDown);
     },
 
     //Will be called only once, at the beginning.
@@ -45,17 +46,19 @@ var Mask = React.createClass({
     },
 
     handleKeyDown : function(e) {
+        console.log("mask key down");
+
         if(this.props.inFocus) {
             if(e.metaKey) {
                 //skip
                 return;
             }
             if (e.keyCode === 9 || e.keyCode === 13) { //Tab || Enter
-                e.data = "next";
-                //bubble up
+                //e.data = "next";
             }
             else if (e.keyCode === 8) { //BackSpace
                 e.preventDefault();
+                e.stopPropagation();
 
                 var char = this.state.maskData.filter(function(charData, index) {
                     return charData.isEditable && charData.isFilled;
@@ -84,6 +87,7 @@ var Mask = React.createClass({
 
             } else {
                 if(e.keyCode>=48 && e.keyCode<=57 || e.keyCode>=96 && e.keyCode<=105) { //only numbers
+                    e.stopPropagation();
                     var char = this.state.maskData.filter(function(charData, index) {
                         return charData.isEditable && !charData.isFilled;
                     })[0];
@@ -158,28 +162,19 @@ var App = React.createClass({
         };
     },
 
-    componentDidMount: function() {
-        document.addEventListener('keydown', this.handleKeyDown);
-    },
-
-    handleKeyDown : function(e) {
-        if(e.data==="next") {
-            e.preventDefault();
-            this.focusNext();
-        }
+    appendFakeInput : function(index) {
+        var inputElem = document.getElementById('fakeInput');
+        inputElem.parentNode.removeChild(inputElem);
+        this.getDOMNode().children[index].appendChild(inputElem);
+        inputElem.focus();
     },
 
     handleClick : function(index) {
         this.setState({
             focusIndex : index
         });
-    },
 
-    focusNext : function() {
-        var newFocusIndex = (this.state.focusIndex + 1) % this.props.data.length;
-        this.setState({
-            focusIndex : newFocusIndex
-        });
+        this.appendFakeInput(index);
     },
 
     render: function() {
@@ -203,13 +198,17 @@ var App = React.createClass({
 
 var masks = [
     {
-        pattern : "MM/DD/YYYY",
-        label : "Enter a date"
+        pattern : "CCCC CCCC CCCC CCCC",
+        label : "Credit Card Number"
     },
     {
-        pattern : "CCCC CCCC CCCC CCCC",
-        label : "Enter credit card number"
+        pattern : "MM/DD/YYYY",
+        label : "Expiry Date"
     },
+    {
+        pattern : "CVC",
+        label : "CVC Number"
+    }
 ];
 
 React.render( <App data={masks}/>, document.getElementById('appBox') );

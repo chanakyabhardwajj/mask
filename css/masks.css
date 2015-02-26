@@ -4,7 +4,6 @@ body {
     font-family: 'Roboto Slab', serif;
     text-align: center;
 }
-
 @-webkit-keyframes blink {
     0% {
         opacity: 1;
@@ -16,68 +15,91 @@ body {
         opacity: 1;
     }
 }
-
 h1 {
     color: #FA8072;
 }
-
+#fakeInput {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    border: 1px solid red;
+}
 .appContainer {
     width: 600px;
-    margin: auto;  
+    margin: auto;
 }
-
 .Mask {
     flex: 1;
     display: flex;
     justify-content: space-between;
     align-items: stretch;
-    margin:40px 0;
+    margin: 40px 0;
     font-size: 20px;
     box-shadow: 2px 2px 2px #222;
-    transition : 0.4s box-shadow ease;
+    transition: 0.4s box-shadow ease;
     background: #2E3338;
     cursor: pointer;
+    position: relative;
 }
-
 .Mask.focussed {
     background: rgba(173, 216, 230, 0.2);
 }
-
 .MaskLabel {
-    flex:1;
+    flex: 1;
     color: #fff;
     font-size: 15px;
     font-weight: 100;
     padding: 10px;
     background: #1abc9c;
     display: flex;
-    align-items : center;
+    align-items: center;
 }
-
 .MaskBody {
-    flex:2;
+    flex: 2;
     display: flex;
     padding: 10px;
     font-family: monospace;
-    justify-content : flex-end;
+    justify-content: flex-end;
 }
-
 .MaskChar {
     float: left;
     white-space: pre;
     margin-left: 5px;
-    color: #FA8072;      
+    color: #FA8072;
 }
-
 .Mask.focussed .MaskChar.blink {
     -webkit-animation: blink 1s infinite;
 }
-
 .MaskChar.editable.empty {
     opacity: 0.4;
-    color:#fff;
+    color: #fff;
 }
-
 .MaskChar.editable.filled {
     opacity: 1;
+}
+section {
+    width: 600px;
+    margin: auto;
+    font-weight: 100;
+    text-align: left;
+}
+@media only screen and (max-width: 600px) {
+    .appContainer {
+        width: 100%;
+        min-width: 370px;
+        margin: auto;
+    }
+    .Mask {
+        display: block;
+        overflow: hidden;
+    }
+    .MaskBody {
+        display: block;
+        overflow: hidden;
+    }
+    section {
+        width: 100%;
+        min-width: 370px;
+    }
 }

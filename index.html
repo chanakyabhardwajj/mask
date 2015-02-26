@@ -3,14 +3,29 @@
 
 <head>
     <meta http-equiv='Content-type' content='text/html; charset=utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Mask Example with External JSX</title>
     <link rel="stylesheet" type="text/css" href="css/masks.css">
     <link href='http://fonts.googleapis.com/css?family=Roboto+Slab:400,100' rel='stylesheet' type='text/css'>
 </head>
 
 <body>
-	<h1>Guided Input Controls</h1>
+	<h1>Per-Character Placeholder</h1>
+    <p>playing with React.js</p>
+    <input type="number" id="fakeInput"/>
     <div id="appBox"></div>
+    <section>
+        This is a simple demo of a credit-card form built with React.js.
+        Instead of a normal text input element with a placeholder attribute,
+        this demo uses <i>span</i> elements to render each character.<br>
+        The key-down events are intercepted and processed to fill/delete the 
+        characters in every field.
+
+        <br><br>As is obvious, this is a very controlled demonstration. 
+        To make this production ready the ancillary features (like copy, paste, select etc.) need to be implemented.
+
+        <br><br>On mobile an invisible input element is used to open the soft-keyboard.
+    </section>
     <script src="js/react.js"></script>
     <script src="js/react-with-addons.js"></script>
     <script src="js/JSXTransformer.js"></script>
